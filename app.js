@@ -128,10 +128,7 @@ app.get("/nse/option_chain", (req, res, next) => {
           return Number(num)
         });
       }
-      console.log(strikePriceToSearchArr);
-      console.log(toStrikePrice);
-      console.log(fromStrikePrice);
-
+      
       if (typeof response.data != 'undefined' && typeof response.data.records !== 'undefined') {
         let indexCurrentSpotPrice = response.data.records.underlyingValue;
         // Filter By ExpiryDate Price
