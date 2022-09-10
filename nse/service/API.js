@@ -1,6 +1,7 @@
 var axios = require('axios');
 
 var csv2Json = require('../../utils/csv2Json');
+const { OPTION_DATA_URL, OPTION_CHAIN_STOCK_URL } = require('../constant');
 
 var MARKET_STATUS_URL = require('../constant').MARKET_STATUS_URL;
 var INDICES_WATCH_URL = require('../constant').INDICES_WATCH_URL;
@@ -107,6 +108,26 @@ function getQuotes(symbol) {
     {
       headers: {
         Referer: GET_QUOTE_URL + encodeURIComponent(symbol),
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+}
+
+function getOptionChain(symbol) {
+  return axios.get(OPTION_DATA_URL + encodeURIComponent(symbol),
+    {
+      headers: {
+        Referer: OPTION_DATA_URL + encodeURIComponent(symbol),
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+}
+
+function getOptionChainStock(symbol) {
+  return axios.get(OPTION_CHAIN_STOCK_URL + encodeURIComponent(symbol),
+    {
+      headers: {
+        Referer: OPTION_CHAIN_STOCK_URL + encodeURIComponent(symbol),
         'X-Requested-With': 'XMLHttpRequest'
       }
     });
@@ -270,7 +291,9 @@ var NSEAPI = {
   get52WeekLow: get52WeekLow,
   getTopValueStocks: getTopValueStocks,
   getTopVolumeStocks: getTopVolumeStocks,
-  getChartDataNew: getChartDataNew
+  getChartDataNew: getChartDataNew,
+  getOptionChain: getOptionChain,
+  getOptionChainStock: getOptionChainStock,
 };
 
 module.exports = NSEAPI;

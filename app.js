@@ -54,7 +54,7 @@ app.get("/nse/get_quote_info", (req, res, next) => {
 // Example: http://localhost:3000/nse/get_multiple_quote_info?companyNames=TCS,WIPRO
 app.get("/nse/get_multiple_quote_info", (req, res, next) => {
   const companyNames = req.query.companyNames.split(",");
-  NSEAPI.getMultipleQuoteInfo(companyNames).then(r =>  res.json(r));
+  NSEAPI.getMultipleQuoteInfo(companyNames).then(r => res.json(r));
 });
 
 // Get the top 10 gainers of NSE - JSON
@@ -109,6 +109,94 @@ app.get("/nse/get_intra_day_data", (req, res, next) => {
   NSEAPI.getIntraDayData(req.query.companyName, req.query.time)
     .then(function (response) {
       res.json(response.data);
+    });
+});
+
+// Get the intra day data of company in NSE - XML
+// Example: http://localhost:3000/nse/get_intra_day_data?companyName=TCS&time=1
+// Example: http://localhost:3000/nse/get_intra_day_data?companyName=TCS&time=month
+app.get("/nse/option_chain", (req, res, next) => {
+  NSEAPI.getOptionChain(req.query.symbol)
+    .then(function (response) {
+      let groupingExpiryData = {};
+      let sameStrikePriceData = {};
+      let strikePriceToSearch = typeof req.query.strikePrice != 'undefined' ? req.query.strikePrice : null;
+      let fromStrikePrice = typeof req.query.fromStrikePrice != 'undefined' ? Number(req.query.fromStrikePrice) : null;
+      let toStrikePrice = typeof req.query.toStrikePrice != 'undefined' ? Number(req.query.toStrikePrice) : null;
+      if (strikePriceToSearch != null) {
+        var strikePriceToSearchArr = strikePriceToSearch.split(',').map((num) => {
+          return Number(num)
+        });
+      }
+      console.log(strikePriceToSearchArr);
+      console.log(toStrikePrice);
+      console.log(fromStrikePrice);
+
+      if (typeof response.data != 'undefined' && typeof response.data.records !== 'undefined') {
+        let indexCurrentSpotPrice = response.data.records.underlyingValue;
+        // Filter By ExpiryDate Price
+        for (let i = 0; i < response.data.records.expiryDates.length; i++) {
+          let sameExpiryData = response.data.records.data.filter(o => o.expiryDate === response.data.records.expiryDates[i]);
+          groupingExpiryData[response.data.records.expiryDates[i]] = sameExpiryData;
+        }
+        // Filter By Strik Price
+        for (let i = 0; i < response.data.records.strikePrices.length; i++) {
+          let filterStrickPriceData = response.data.records.data.filter(o => o.strikePrice == response.data.records.strikePrices[i]);
+          sameStrikePriceData[response.data.records.strikePrices[i]] = filterStrickPriceData;
+        }
+        // Filter By Strik Price & openInterest > 0 & impliedVolatility > 0
+        // && indexCurrentSpotPrice below 3000 and above 3000
+        let upDownSpotPrice = 4000;
+        let minStrikePrice = indexCurrentSpotPrice - upDownSpotPrice;
+        let maxStrikePrice = indexCurrentSpotPrice + upDownSpotPrice;
+        let filteredDate = {};
+        for (let i = 0; i < response.data.records.strikePrices.length; i++) {
+          if (response.data.records.strikePrices[i] > minStrikePrice && response.data.records.strikePrices[i] < maxStrikePrice) {
+
+            let filterStrickPriceData = response.data.records.data.filter(o => (o.strikePrice == response.data.records.strikePrices[i]));
+
+            let filtWithoOINotZero = filterStrickPriceData.filter(o => (
+              (typeof o.CE != 'undefined' && o.CE.openInterest > 0 && o.CE.impliedVolatility > 0) ||
+              (typeof o.PE != 'undefined' && o.PE.openInterest > 0 && o.PE.impliedVolatility > 0)
+            ));
+
+            // Filter with Selected strike price
+            if (strikePriceToSearch != null) {
+              filtWithoOINotZero = filtWithoOINotZero.filter(o => (strikePriceToSearchArr.includes(o.strikePrice)));
+            }
+
+            // Filter between Two Strike Price
+            // if (toStrikePrice) {
+            //   filtWithoOINotZero = filterStrickPriceData.filter(o => (o.strikePrice == response.data.records.strikePrices[i]));
+            // }
+
+            if (filtWithoOINotZero.length > 0) {
+              filteredDate[response.data.records.strikePrices[i]] = filtWithoOINotZero;
+            }
+          }
+        }
+        res.json(filteredDate);
+      } else {
+        res.json(response.data);
+      }
+
+    });
+});
+
+app.get("/nse/option_chain_stock", (req, res, next) => {
+  NSEAPI.getOptionChainStock(req.query.symbol)
+    .then(function (response) {
+      let groupingExpiryData = [];
+      if (typeof response.data != 'undefined' && typeof response.data.records !== 'undefined') {
+        for (let i = 0; i < response.data.records.expiryDates.length; i++) {
+          let sameExpiryData = response.data.data.find(o => o.expiryDate === response.data.records.expiryDates[i]);
+          groupingExpiryData[response.data.records.expiryDates[i]].push(sameExpiryData);
+        }
+        res.json(groupingExpiryData);
+      } else {
+        res.json(response.data);
+      }
+
     });
 });
 

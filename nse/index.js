@@ -147,6 +147,20 @@ function getStockFuturesData(symbol, expiryDate, isIndex) {
   return NSEAPI.getStockFuturesData(symbol, expiryDate, isIndex);
 }
 
+/**
+ *  GET NSE OPTION CHAIN by symbol
+ * @param symbol {string} min 3 chars
+ * @returns {[symbol]}
+ */
+ function getOptionChain(symbol) {
+  return NSEAPI.getOptionChain(symbol);
+}
+
+
+function getOptionChainStock(symbol) {
+  return NSEAPI.getOptionChainStock(symbol);
+}
+
 
 function get52WeekHigh() {
   return NSEAPI.get52WeekHigh();
@@ -186,7 +200,9 @@ var nse = {
   get52WeekLow: get52WeekLow,
   getTopValueStocks: getTopValueStocks,
   getTopVolumeStocks: getTopVolumeStocks,
-  getChartDataNew: getChartDataNew
+  getChartDataNew: getChartDataNew,
+  getOptionChain: getOptionChain,
+  getOptionChainStock: getOptionChainStock,
 };
 
 module.exports = nse;
