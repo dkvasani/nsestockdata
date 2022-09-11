@@ -13,8 +13,35 @@ app.listen(PORT, () => {
 });
 
 app.get("/test", (req, res, next) => {
-  
-      res.json({status : 'ok Working perfectly'});
+  var http = require("https");
+
+var options = {
+  "method": "GET",
+  "hostname": "jsonplaceholder.typicode.com",
+  "port": null,
+  "path": "/comments?postId=1",
+  "headers": {
+    "cache-control": "no-cache",
+    "postman-token": "706f46fe-0a84-2f37-f064-5fb831599133"
+  }
+};
+
+var request = http.request(options, function (response) {
+  var chunks = [];
+
+  response.on("data", function (chunk) {
+    chunks.push(chunk);
+  });
+
+  response.on("end", function () {
+    var body = Buffer.concat(chunks);
+    console.log(body.toString());
+    res.json({status : JSON.parse(body)});
+  });
+});
+
+request.end();
+      //res.json({status : 'ok Working perfectly'});
    
 });
 
